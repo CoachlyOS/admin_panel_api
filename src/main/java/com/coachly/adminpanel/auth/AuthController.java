@@ -1,11 +1,12 @@
-package com.coachly.adminpanel.controller;
+package com.coachly.adminpanel.auth;
 
-import com.coachly.adminpanel.dto.ErrorResponse;
-import com.coachly.adminpanel.dto.LoginRequest;
-import com.coachly.adminpanel.dto.LoginResponse;
-import com.coachly.adminpanel.dto.UserProfileResponse;
-import com.coachly.adminpanel.repository.UserRepository;
+import com.coachly.adminpanel.auth.dto.LoginRequest;
+import com.coachly.adminpanel.auth.dto.LoginResponse;
+import com.coachly.adminpanel.auth.dto.UserProfileResponse;
+import com.coachly.adminpanel.common.ErrorResponse;
 import com.coachly.adminpanel.security.JwtTokenProvider;
+import com.coachly.adminpanel.user.UserRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class AuthController {
     private final UserRepository userRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
         try {
             var authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(

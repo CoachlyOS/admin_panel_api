@@ -1,4 +1,4 @@
-package com.coachly.adminpanel.dto;
+package com.coachly.adminpanel.auth.dto;
 
 import java.util.Collection;
 

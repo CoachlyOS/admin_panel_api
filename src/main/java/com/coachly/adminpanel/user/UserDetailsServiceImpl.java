@@ -1,6 +1,5 @@
-package com.coachly.adminpanel.service;
+package com.coachly.adminpanel.user;
 
-import com.coachly.adminpanel.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;

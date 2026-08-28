@@ -1,3 +1,3 @@
-package com.coachly.adminpanel.dto;
+package com.coachly.adminpanel.common;
 
 public record ErrorResponse(String message) {}
