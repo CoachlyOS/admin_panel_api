@@ -1,11 +1,11 @@
 package com.coachly.adminpanel.auth;
 
+import com.coachly.adminpanel.administrator.AdministratorRepository;
+import com.coachly.adminpanel.auth.dto.AdministratorProfileResponse;
 import com.coachly.adminpanel.auth.dto.LoginRequest;
 import com.coachly.adminpanel.auth.dto.LoginResponse;
-import com.coachly.adminpanel.auth.dto.UserProfileResponse;
 import com.coachly.adminpanel.common.ErrorResponse;
 import com.coachly.adminpanel.security.JwtTokenProvider;
-import com.coachly.adminpanel.user.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,7 +24,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
-    private final UserRepository userRepository;
+    private final AdministratorRepository administratorRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
@@ -43,10 +43,17 @@ public class AuthController {
 
             var token = tokenProvider.generateToken(username, roles);
 
-            var user = userRepository.findByUsername(username).orElseThrow();
-            var userProfile = new UserProfileResponse(user.getId(), user.getUsername(), user.getEmail(), roles);
+            var administrator = administratorRepository.findByUsername(username).orElseThrow();
 
-            return ResponseEntity.ok(new LoginResponse(token, userProfile));
+            // TODO: Refactor to return only necessary fields
+            var administratorProfile = new AdministratorProfileResponse(
+                    administrator.getId(),
+                    administrator.getUsername(),
+                    administrator.getEmail(),
+                    administrator.getRole()
+            );
+
+            return ResponseEntity.ok(new LoginResponse(token, administratorProfile));
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorResponse("Invalid username or password."));
@@ -60,13 +67,16 @@ public class AuthController {
         }
 
         var username = authentication.getName();
-        var roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
 
-        return userRepository.findByUsername(username)
-                .map(user -> ResponseEntity.ok(
-                        new UserProfileResponse(user.getId(), user.getUsername(), user.getEmail(), roles)))
+        return administratorRepository.findByUsername(username)
+                .map(administrator -> ResponseEntity.ok(
+                        new AdministratorProfileResponse(
+                                administrator.getId(),
+                                administrator.getUsername(),
+                                administrator.getEmail(),
+                                administrator.getRole()
+                        )
+                ))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 }
