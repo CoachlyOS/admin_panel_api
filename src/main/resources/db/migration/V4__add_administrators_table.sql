@@ -1,5 +1,5 @@
 DO $$ BEGIN
-CREATE TYPE administrator_role AS ENUM ('admin', 'moderator');
+CREATE TYPE administrator_role AS ENUM ('ADMIN', 'MANAGER');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

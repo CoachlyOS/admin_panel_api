@@ -21,7 +21,7 @@ public class AdministratorDetailsServiceImpl implements UserDetailsService {
     public @NonNull UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException {
         var administrator = administratorRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Administrator not found: " + username));
-        var authorities =  AuthorityUtils.createAuthorityList(ROLE_PREFIX + administrator.getRole().name().toUpperCase());
+        var authorities =  AuthorityUtils.createAuthorityList(ROLE_PREFIX + administrator.getRole().name());
 
         return new User(administrator.getUsername(), administrator.getPassword(), authorities);
     }
