@@ -1,5 +1,7 @@
 package com.coachly.adminpanel.common;
 
+import com.coachly.adminpanel.common.exception.ResourceNotFoundException;
+import com.coachly.adminpanel.common.exception.UsernameAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -20,8 +22,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponse(message));
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse("The data was updated by another user. Please reload and try again."));
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("The profile was updated by another user. Please reload and try again."));
     }
 }

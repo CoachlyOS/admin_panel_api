@@ -40,10 +40,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((_, response, _) -> {
+                        .authenticationEntryPoint((_, response, exception) -> {
                             response.setContentType("application/json");
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.getWriter().write("{\"message\": \"Invalid or expired token.\"}");
+                            response.getWriter().write(String.format("{\"message\": \"%s\"}", exception.getCause().getMessage()));
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
