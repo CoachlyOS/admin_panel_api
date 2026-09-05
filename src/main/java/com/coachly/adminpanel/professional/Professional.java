@@ -1,0 +1,45 @@
+package com.coachly.adminpanel.professional;
+
+import com.coachly.adminpanel.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.UUID;
+
+@Entity
+@Table(name = "professionals")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Professional extends BaseEntity {
+
+    @Version
+    @Column(nullable = false)
+    private Integer version;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "UUID")
+    private UUID id;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, name = "password_hash")
+    private String password;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "chat_id", unique = true)
+    private Long chatId;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private String locale = "en";
+}

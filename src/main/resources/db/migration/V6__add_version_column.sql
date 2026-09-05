@@ -1,0 +1,1 @@
+ALTER TABLE professionals ADD version INTEGER NOT NULL DEFAULT 0

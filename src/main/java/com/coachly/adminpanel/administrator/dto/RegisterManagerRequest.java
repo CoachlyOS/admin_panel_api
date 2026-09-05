@@ -1,4 +1,4 @@
-package com.coachly.adminpanel.auth.dto;
+package com.coachly.adminpanel.administrator.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -1,7 +1,9 @@
 package com.coachly.adminpanel.administrator;
 
-import com.coachly.adminpanel.auth.dto.RegisterManagerRequest;
+import com.coachly.adminpanel.administrator.dto.RegisterManagerRequest;
+import com.coachly.adminpanel.common.ErrorResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +26,7 @@ public class AdministratorController {
         var username = request.username();
 
         if (administratorRepository.findByUsername(username).isPresent()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse("Username is already in use"));
         }
 
         var manager = Administrator.builder()
