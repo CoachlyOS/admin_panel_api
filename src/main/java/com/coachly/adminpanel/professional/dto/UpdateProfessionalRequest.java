@@ -4,7 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 
 public record UpdateProfessionalRequest(
         @NotBlank String username,
-        @NotBlank String firstName,
-        @NotBlank String lastName
+        String firstName,
+        String lastName,
+        String biography,
+        String locale
 ) {
 }

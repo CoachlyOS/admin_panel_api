@@ -3,6 +3,8 @@ package com.coachly.adminpanel.administrator;
 import com.coachly.adminpanel.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -29,6 +31,7 @@ public class Administrator extends BaseEntity {
     @Column(unique = true)
     private String email;
 
+    @JdbcTypeCode(SqlTypes.ENUM)
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, columnDefinition = "administrator_role")
 //    @JdbcType(PostgreSQLEnumJdbcType.class)

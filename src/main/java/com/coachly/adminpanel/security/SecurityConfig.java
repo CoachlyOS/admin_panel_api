@@ -43,7 +43,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint((_, response, exception) -> {
                             response.setContentType("application/json");
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.getWriter().write(String.format("{\"message\": \"%s\"}", exception.getCause().getMessage()));
+                            String message = exception.getCause() != null ? exception.getCause().getMessage() : exception.getMessage();
+                            response.getWriter().write(String.format("{\"message\": \"%s\"}", message));
                         })
                 )
                 .authorizeHttpRequests(auth -> auth

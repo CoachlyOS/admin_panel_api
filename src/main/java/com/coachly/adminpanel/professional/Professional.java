@@ -3,7 +3,11 @@ package com.coachly.adminpanel.professional;
 import com.coachly.adminpanel.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -42,4 +46,9 @@ public class Professional extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private String locale = "en";
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    @Builder.Default
+    private Map<String, String> biography = new HashMap<>();
 }

@@ -3,7 +3,6 @@ package com.coachly.adminpanel.administrator;
 import com.coachly.adminpanel.administrator.dto.RegisterManagerRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,8 +18,7 @@ public class AdministratorController {
 
     @PostMapping("/register-manager")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> registerManager(@RequestBody @Valid RegisterManagerRequest request) {
+    public void registerManager(@RequestBody @Valid RegisterManagerRequest request) {
         administratorService.registerManager(request);
-        return ResponseEntity.ok().build();
     }
 }
