@@ -7,7 +7,6 @@ public record RegisterProfessionalRequest(
         @NotBlank String username,
         @NotBlank String password,
         @NotBlank String firstName,
-        @NotBlank String lastName,
-        Set<String> disciplines
+        @NotBlank String lastName
 ) {
 }

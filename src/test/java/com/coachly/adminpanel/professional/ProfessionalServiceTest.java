@@ -55,55 +55,14 @@ class ProfessionalServiceTest {
     }
 
     @Test
-    void registerProfessional_withDisciplines_shouldSaveWithDisciplines() {
-        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("password123")).thenReturn("encoded_password");
-        when(disciplineRepository.findBySlug("mma")).thenReturn(Optional.of(mmaDiscipline));
-        when(disciplineRepository.findBySlug("boxing")).thenReturn(Optional.of(boxingDiscipline));
-
-        RegisterProfessionalRequest request = new RegisterProfessionalRequest(
-                "john_doe", "password123", "John", "Doe", Set.of("mma", "boxing")
-        );
-
-        professionalService.registerProfessional(request);
-
-        ArgumentCaptor<Professional> captor = ArgumentCaptor.forClass(Professional.class);
-        verify(professionalRepository, times(1)).save(captor.capture());
-
-        Professional saved = captor.getValue();
-        assertThat(saved.getUsername()).isEqualTo("john_doe");
-        assertThat(saved.getPassword()).isEqualTo("encoded_password");
-        assertThat(saved.getFirstName()).isEqualTo("John");
-        assertThat(saved.getLastName()).isEqualTo("Doe");
-        assertThat(saved.getDisciplines()).containsExactlyInAnyOrder(mmaDiscipline, boxingDiscipline);
-    }
-
-    @Test
     void registerProfessional_withExistingUsername_shouldThrowUsernameAlreadyExistsException() {
         when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(new Professional()));
         RegisterProfessionalRequest request = new RegisterProfessionalRequest(
-                "john_doe", "password123", "John", "Doe", null
-        );
+                "john_doe", "password123", "John", "Doe");
 
         assertThatThrownBy(() -> professionalService.registerProfessional(request))
                 .isInstanceOf(UsernameAlreadyExistsException.class)
                 .hasMessageContaining("Username is already in use");
-
-        verify(professionalRepository, never()).save(any());
-    }
-
-    @Test
-    void registerProfessional_withNonExistingDiscipline_shouldThrowResourceNotFoundException() {
-        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.empty());
-        when(disciplineRepository.findBySlug("invalid")).thenReturn(Optional.empty());
-
-        RegisterProfessionalRequest request = new RegisterProfessionalRequest(
-                "john_doe", "password123", "John", "Doe", Set.of("invalid")
-        );
-
-        assertThatThrownBy(() -> professionalService.registerProfessional(request))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Discipline not found with slug: invalid");
 
         verify(professionalRepository, never()).save(any());
     }
@@ -116,6 +75,7 @@ class ProfessionalServiceTest {
                 .lastName("Doe")
                 .locale("en")
                 .biography(Map.of("en", "Bio"))
+                .socials(Map.of("instagram", "https://instagram.com/johndoe"))
                 .disciplines(Set.of(mmaDiscipline))
                 .build();
 
@@ -128,6 +88,7 @@ class ProfessionalServiceTest {
         assertThat(response.lastName()).isEqualTo("Doe");
         assertThat(response.locale()).isEqualTo("en");
         assertThat(response.biography()).containsEntry("en", "Bio");
+        assertThat(response.socials()).containsEntry("instagram", "https://instagram.com/johndoe");
         
         assertThat(response.disciplines()).hasSize(1);
         assertThat(response.disciplines().get(0).slug()).isEqualTo("mma");
@@ -149,7 +110,7 @@ class ProfessionalServiceTest {
         when(disciplineRepository.findBySlug("boxing")).thenReturn(Optional.of(boxingDiscipline));
 
         UpdateProfessionalRequest request = new UpdateProfessionalRequest(
-                "john_doe", "Johnny", "Doey", "Updated Bio", "en", Set.of("boxing")
+                "john_doe", "Johnny", "Doey", "Updated Bio", "en", Set.of("boxing"), Map.of("instagram", "https://instagram.com/johnny")
         );
 
         professionalService.updateProfessional(request);
@@ -157,6 +118,7 @@ class ProfessionalServiceTest {
         assertThat(professional.getFirstName()).isEqualTo("Johnny");
         assertThat(professional.getLastName()).isEqualTo("Doey");
         assertThat(professional.getBiography()).containsEntry("en", "Updated Bio");
+        assertThat(professional.getSocials()).containsEntry("instagram", "https://instagram.com/johnny");
         assertThat(professional.getDisciplines()).containsExactly(boxingDiscipline);
         verify(professionalRepository, times(1)).save(professional);
     }

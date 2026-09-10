@@ -1,6 +1,7 @@
 package com.coachly.adminpanel.professional.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import java.util.Map;
 import java.util.Set;
 
 public record UpdateProfessionalRequest(
@@ -9,6 +10,7 @@ public record UpdateProfessionalRequest(
         String lastName,
         String biography,
         String locale,
-        Set<String> disciplines
+        Set<String> disciplines,
+        Map<String, String> socials
 ) {
 }

@@ -50,10 +50,19 @@ public class Professional extends BaseEntity {
     @Builder.Default
     private String locale = "en";
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     @Builder.Default
     private Map<String, String> biography = new HashMap<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    @Builder.Default
+    private Map<String, String> socials = new HashMap<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

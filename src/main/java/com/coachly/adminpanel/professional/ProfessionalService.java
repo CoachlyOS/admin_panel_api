@@ -8,6 +8,7 @@ import com.coachly.adminpanel.discipline.dto.DisciplineResponse;
 import com.coachly.adminpanel.professional.dto.ProfessionalProfileResponse;
 import com.coachly.adminpanel.professional.dto.RegisterProfessionalRequest;
 import com.coachly.adminpanel.professional.dto.UpdateProfessionalRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,20 +36,11 @@ public class ProfessionalService {
             throw new UsernameAlreadyExistsException("Username is already in use");
         }
 
-        Set<Discipline> disciplines = new HashSet<>();
-        if (request.disciplines() != null && !request.disciplines().isEmpty()) {
-            disciplines = request.disciplines().stream()
-                    .map(slug -> disciplineRepository.findBySlug(slug)
-                            .orElseThrow(() -> new ResourceNotFoundException("Discipline not found with slug: " + slug)))
-                    .collect(Collectors.toSet());
-        }
-
         var professional = Professional.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
                 .firstName(request.firstName())
                 .lastName(request.lastName())
-                .disciplines(disciplines)
                 .build();
 
         professionalRepository.save(professional);
@@ -62,10 +54,12 @@ public class ProfessionalService {
                         professional.getFirstName(),
                         professional.getLastName(),
                         professional.getLocale(),
+                        professional.getIsActive(),
                         professional.getBiography(),
                         professional.getDisciplines().stream()
                                 .map(d -> new DisciplineResponse(d.getSlug(), d.getName()))
-                                .toList()
+                                .toList(),
+                        professional.getSocials()
                 ))
                 .orElseThrow(() -> new ResourceNotFoundException("Username not found"));
     }
@@ -108,8 +102,22 @@ public class ProfessionalService {
             hasChanged = true;
         }
 
+        if (request.socials() != null) {
+            professional.setSocials(request.socials());
+            hasChanged = true;
+        }
+
         if (hasChanged) {
             professionalRepository.save(professional);
         }
+    }
+
+    @Transactional
+    public void deactivateProfessional(String username) {
+        var professional = professionalRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Username not found"));
+
+        professional.setIsActive(false);
+        professionalRepository.save(professional);
     }
 }

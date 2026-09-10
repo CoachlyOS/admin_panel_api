@@ -30,4 +30,9 @@ public class ProfessionalController {
     public ProfessionalProfileResponse getProfessional(@PathVariable String username) {
         return professionalService.getProfessional(username);
     }
+
+    @PostMapping("/{username}/deactivate")
+    public void deactivateProfessional(@PathVariable String username) {
+        professionalService.deactivateProfessional(username);
+    }
 }

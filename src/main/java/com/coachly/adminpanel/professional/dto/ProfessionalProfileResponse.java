@@ -9,6 +9,8 @@ public record ProfessionalProfileResponse(
         String firstName,
         String lastName,
         String locale,
+        Boolean isActive,
         Map<String, String> biography,
-        List<DisciplineResponse> disciplines
+        List<DisciplineResponse> disciplines,
+        Map<String, String> socials
 ) {}
