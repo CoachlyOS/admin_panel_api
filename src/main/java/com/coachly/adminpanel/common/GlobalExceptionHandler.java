@@ -1,5 +1,6 @@
 package com.coachly.adminpanel.common;
 
+import com.coachly.adminpanel.common.exception.DisciplineAlreadyExistsException;
 import com.coachly.adminpanel.common.exception.ResourceNotFoundException;
 import com.coachly.adminpanel.common.exception.UsernameAlreadyExistsException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,6 +32,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DisciplineAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleDisciplineAlreadyExists(DisciplineAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(ex.getMessage()));
     }
 

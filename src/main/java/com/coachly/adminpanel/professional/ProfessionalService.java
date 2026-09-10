@@ -2,6 +2,9 @@ package com.coachly.adminpanel.professional;
 
 import com.coachly.adminpanel.common.exception.ResourceNotFoundException;
 import com.coachly.adminpanel.common.exception.UsernameAlreadyExistsException;
+import com.coachly.adminpanel.discipline.Discipline;
+import com.coachly.adminpanel.discipline.DisciplineRepository;
+import com.coachly.adminpanel.discipline.dto.DisciplineResponse;
 import com.coachly.adminpanel.professional.dto.ProfessionalProfileResponse;
 import com.coachly.adminpanel.professional.dto.RegisterProfessionalRequest;
 import com.coachly.adminpanel.professional.dto.UpdateProfessionalRequest;
@@ -13,7 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +27,20 @@ public class ProfessionalService {
 
     private final ProfessionalRepository professionalRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DisciplineRepository disciplineRepository;
 
+    @Transactional
     public void registerProfessional(RegisterProfessionalRequest request) throws DataIntegrityViolationException {
         if (professionalRepository.findByUsername(request.username()).isPresent()) {
             throw new UsernameAlreadyExistsException("Username is already in use");
+        }
+
+        Set<Discipline> disciplines = new HashSet<>();
+        if (request.disciplines() != null && !request.disciplines().isEmpty()) {
+            disciplines = request.disciplines().stream()
+                    .map(slug -> disciplineRepository.findBySlug(slug)
+                            .orElseThrow(() -> new ResourceNotFoundException("Discipline not found with slug: " + slug)))
+                    .collect(Collectors.toSet());
         }
 
         var professional = Professional.builder()
@@ -32,11 +48,13 @@ public class ProfessionalService {
                 .password(passwordEncoder.encode(request.password()))
                 .firstName(request.firstName())
                 .lastName(request.lastName())
+                .disciplines(disciplines)
                 .build();
 
         professionalRepository.save(professional);
     }
 
+    @Transactional(readOnly = true)
     public ProfessionalProfileResponse getProfessional(String username) {
         return professionalRepository.findByUsername(username)
                 .map(professional -> new ProfessionalProfileResponse(
@@ -44,7 +62,10 @@ public class ProfessionalService {
                         professional.getFirstName(),
                         professional.getLastName(),
                         professional.getLocale(),
-                        professional.getBiography()
+                        professional.getBiography(),
+                        professional.getDisciplines().stream()
+                                .map(d -> new DisciplineResponse(d.getSlug(), d.getName()))
+                                .toList()
                 ))
                 .orElseThrow(() -> new ResourceNotFoundException("Username not found"));
     }
@@ -67,11 +88,8 @@ public class ProfessionalService {
 
         if (StringUtils.hasLength(request.biography())) {
             if (StringUtils.hasLength(request.locale())) {
-                Map<String, String> biography = professional.getBiography();
-
-                if (biography == null) {
-                    biography = new HashMap<>();
-                }
+                Map<String, String> biography = professional.getBiography() != null ?
+                        new HashMap<>(professional.getBiography()) : new HashMap<>();
 
                 biography.put(request.locale(), request.biography());
                 professional.setBiography(biography);
@@ -79,6 +97,15 @@ public class ProfessionalService {
             } else {
                 throw new IllegalArgumentException("Both biography and locale must be provided together.");
             }
+        }
+
+        if (request.disciplines() != null) {
+            Set<Discipline> newDisciplines = request.disciplines().stream()
+                    .map(slug -> disciplineRepository.findBySlug(slug)
+                            .orElseThrow(() -> new ResourceNotFoundException("Discipline not found with slug: " + slug)))
+                    .collect(Collectors.toSet());
+            professional.setDisciplines(newDisciplines);
+            hasChanged = true;
         }
 
         if (hasChanged) {
