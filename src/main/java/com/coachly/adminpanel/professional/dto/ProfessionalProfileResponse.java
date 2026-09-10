@@ -12,5 +12,6 @@ public record ProfessionalProfileResponse(
         Boolean isActive,
         Map<String, String> biography,
         List<DisciplineResponse> disciplines,
-        Map<String, String> socials
+        Map<String, String> socials,
+        String avatarUrl
 ) {}

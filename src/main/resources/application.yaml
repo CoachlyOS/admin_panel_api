@@ -27,3 +27,13 @@ app:
   cors:
     allowed-origins:
       - http://localhost:5173
+  storage:
+    # Choose from: 'local', 's3', or 'gcs'
+    provider: ${STORAGE_PROVIDER:local}
+    cdn-base-url: ${STORAGE_CDN_BASE_URL:}
+    local-dir: ${STORAGE_LOCAL_DIR:uploads}
+    s3:
+      bucket: ${AWS_S3_BUCKET:}
+      region: ${AWS_S3_REGION:us-east-1}
+    gcs:
+      bucket: ${GCS_BUCKET:}

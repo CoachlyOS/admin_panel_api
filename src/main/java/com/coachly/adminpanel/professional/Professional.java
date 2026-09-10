@@ -31,6 +31,9 @@ public class Professional extends BaseEntity {
     @Column(columnDefinition = "UUID")
     private UUID id;
 
+    @Column(name = "avatar_id")
+    private String avatarId;
+
     @Column(nullable = false, unique = true)
     private String username;
 

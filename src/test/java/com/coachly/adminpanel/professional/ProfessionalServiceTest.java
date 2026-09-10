@@ -2,6 +2,7 @@ package com.coachly.adminpanel.professional;
 
 import com.coachly.adminpanel.common.exception.ResourceNotFoundException;
 import com.coachly.adminpanel.common.exception.UsernameAlreadyExistsException;
+import com.coachly.adminpanel.common.storage.StorageService;
 import com.coachly.adminpanel.discipline.Discipline;
 import com.coachly.adminpanel.discipline.DisciplineRepository;
 import com.coachly.adminpanel.discipline.dto.DisciplineResponse;
@@ -35,6 +36,9 @@ class ProfessionalServiceTest {
 
     @Mock
     private DisciplineRepository disciplineRepository;
+
+    @Mock
+    private StorageService storageService;
 
     @InjectMocks
     private ProfessionalService professionalService;
@@ -77,9 +81,11 @@ class ProfessionalServiceTest {
                 .biography(Map.of("en", "Bio"))
                 .socials(Map.of("instagram", "https://instagram.com/johndoe"))
                 .disciplines(Set.of(mmaDiscipline))
+                .avatarId("avatars/test-avatar.png")
                 .build();
 
         when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(professional));
+        when(storageService.resolveUrl("avatars/test-avatar.png")).thenReturn("http://localhost:8080/uploads/avatars/test-avatar.png");
 
         ProfessionalProfileResponse response = professionalService.getProfessional("john_doe");
 
@@ -89,6 +95,7 @@ class ProfessionalServiceTest {
         assertThat(response.locale()).isEqualTo("en");
         assertThat(response.biography()).containsEntry("en", "Bio");
         assertThat(response.socials()).containsEntry("instagram", "https://instagram.com/johndoe");
+        assertThat(response.avatarUrl()).isEqualTo("http://localhost:8080/uploads/avatars/test-avatar.png");
         
         assertThat(response.disciplines()).hasSize(1);
         assertThat(response.disciplines().get(0).slug()).isEqualTo("mma");
