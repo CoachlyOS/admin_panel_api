@@ -13,5 +13,7 @@ public record ProfessionalProfileResponse(
         Map<String, String> biography,
         List<DisciplineResponse> disciplines,
         Map<String, String> socials,
-        String avatarUrl
+        String avatarUrl,
+        Integer subscriptionCount,
+        List<ProfessionalAppointmentResponse> appointments
 ) {}

@@ -1,5 +1,6 @@
 package com.coachly.adminpanel.professional;
 
+import com.coachly.adminpanel.appointment.Appointment;
 import com.coachly.adminpanel.common.BaseEntity;
 import com.coachly.adminpanel.discipline.Discipline;
 import jakarta.persistence.*;
@@ -7,11 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "professionals")
@@ -66,6 +63,10 @@ public class Professional extends BaseEntity {
     @Column(columnDefinition = "jsonb")
     @Builder.Default
     private Map<String, String> socials = new HashMap<>();
+
+    @OneToMany(mappedBy = "professional", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<Appointment> appointments = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

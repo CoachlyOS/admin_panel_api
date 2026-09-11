@@ -1,13 +1,17 @@
 package com.coachly.adminpanel.professional;
 
 import com.coachly.adminpanel.common.exception.ResourceNotFoundException;
+import com.coachly.adminpanel.common.exception.StorageException;
 import com.coachly.adminpanel.common.exception.UsernameAlreadyExistsException;
 import com.coachly.adminpanel.common.storage.StorageService;
 import com.coachly.adminpanel.discipline.Discipline;
 import com.coachly.adminpanel.discipline.DisciplineRepository;
 import com.coachly.adminpanel.discipline.dto.DisciplineResponse;
 import com.coachly.adminpanel.professional.dto.AvatarResponse;
+import com.coachly.adminpanel.professional.dto.ProfessionalAppointmentResponse;
 import com.coachly.adminpanel.professional.dto.ProfessionalProfileResponse;
+import com.coachly.adminpanel.professional.dto.ProfessionalResponse;
+import com.coachly.adminpanel.professional.dto.ProfessionalSubscriptionCount;
 import com.coachly.adminpanel.professional.dto.RegisterProfessionalRequest;
 import com.coachly.adminpanel.professional.dto.UpdateProfessionalRequest;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +23,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,23 +53,59 @@ public class ProfessionalService {
         professionalRepository.save(professional);
     }
 
-    @Transactional(readOnly = true)
     public ProfessionalProfileResponse getProfessional(String username) {
-        return professionalRepository.findByUsername(username)
-                .map(professional -> new ProfessionalProfileResponse(
+        var professional = professionalRepository.findByUsernameWithDetails(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Username not found"));
+
+        int subscriberCount = professionalRepository.countActiveSubscribersByProfessionalId(professional.getId());
+
+        var appointments = professional.getAppointments().stream()
+                .map(app -> new ProfessionalAppointmentResponse(
+                        app.getId(),
+                        app.getType(),
+                        app.getStartTime(),
+                        app.getEndTime(),
+                        app.getStatus(),
+                        app.getDescription()
+                ))
+                .toList();
+
+        return new ProfessionalProfileResponse(
+                professional.getUsername(),
+                professional.getFirstName(),
+                professional.getLastName(),
+                professional.getLocale(),
+                professional.getIsActive(),
+                professional.getBiography(),
+                professional.getDisciplines().stream()
+                        .map(d -> new DisciplineResponse(d.getSlug(), d.getName()))
+                        .toList(),
+                professional.getSocials(),
+                storageService.resolveUrl(professional.getAvatarId()),
+                subscriberCount,
+                appointments
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProfessionalResponse> getAllProfessionals() {
+        Map<UUID, Long> subscriberCounts = professionalRepository.countActiveSubscribersAll().stream()
+                .collect(Collectors.toMap(
+                        ProfessionalSubscriptionCount::getProfessionalId,
+                        ProfessionalSubscriptionCount::getActiveCount
+                ));
+
+        return professionalRepository.findAll().stream()
+                .map(professional -> new ProfessionalResponse(
                         professional.getUsername(),
                         professional.getFirstName(),
                         professional.getLastName(),
                         professional.getLocale(),
                         professional.getIsActive(),
-                        professional.getBiography(),
-                        professional.getDisciplines().stream()
-                                .map(d -> new DisciplineResponse(d.getSlug(), d.getName()))
-                                .toList(),
-                        professional.getSocials(),
-                        storageService.resolveUrl(professional.getAvatarId())
+                        storageService.resolveUrl(professional.getAvatarId()),
+                        subscriberCounts.getOrDefault(professional.getId(), 0L).intValue()
                 ))
-                .orElseThrow(() -> new ResourceNotFoundException("Username not found"));
+                .toList();
     }
 
     @Transactional
@@ -87,7 +129,7 @@ public class ProfessionalService {
 
             return new AvatarResponse(storageService.resolveUrl(key));
         } catch (IOException e) {
-            throw new RuntimeException("Failed to upload avatar", e);
+            throw new StorageException("Failed to upload avatar", e);
         }
     }
 
@@ -114,10 +156,14 @@ public class ProfessionalService {
         }
 
         if (request.disciplines() != null) {
-            Set<Discipline> newDisciplines = request.disciplines().stream()
-                    .map(slug -> disciplineRepository.findBySlug(slug)
-                            .orElseThrow(() -> new ResourceNotFoundException("Discipline not found with slug: " + slug)))
-                    .collect(Collectors.toSet());
+            Set<Discipline> newDisciplines = disciplineRepository.findAllBySlugIn(request.disciplines());
+            if (newDisciplines.size() != request.disciplines().size()) {
+                Set<String> foundSlugs = newDisciplines.stream().map(Discipline::getSlug).collect(Collectors.toSet());
+                String missingSlug = request.disciplines().stream()
+                        .filter(slug -> !foundSlugs.contains(slug))
+                        .findFirst().orElseThrow();
+                throw new ResourceNotFoundException("Discipline not found with slug: " + missingSlug);
+            }
             professional.setDisciplines(newDisciplines);
         }
 

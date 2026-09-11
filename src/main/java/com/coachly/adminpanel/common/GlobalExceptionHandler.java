@@ -2,6 +2,7 @@ package com.coachly.adminpanel.common;
 
 import com.coachly.adminpanel.common.exception.DisciplineAlreadyExistsException;
 import com.coachly.adminpanel.common.exception.ResourceNotFoundException;
+import com.coachly.adminpanel.common.exception.StorageException;
 import com.coachly.adminpanel.common.exception.UsernameAlreadyExistsException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -55,6 +56,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<ErrorResponse> handleStorageException(StorageException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("File storage operation failed. Please try again later."));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

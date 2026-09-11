@@ -2,6 +2,7 @@ package com.coachly.adminpanel.professional;
 
 import com.coachly.adminpanel.professional.dto.AvatarResponse;
 import com.coachly.adminpanel.professional.dto.ProfessionalProfileResponse;
+import com.coachly.adminpanel.professional.dto.ProfessionalResponse;
 import com.coachly.adminpanel.professional.dto.RegisterProfessionalRequest;
 import com.coachly.adminpanel.professional.dto.UpdateProfessionalRequest;
 import jakarta.validation.Valid;
@@ -9,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/professional")
@@ -31,6 +34,11 @@ public class ProfessionalController {
     @GetMapping("/{username}")
     public ProfessionalProfileResponse getProfessional(@PathVariable String username) {
         return professionalService.getProfessional(username);
+    }
+
+    @GetMapping("/all")
+    public List<ProfessionalResponse> getAllProfessionals() {
+        return professionalService.getAllProfessionals();
     }
 
     @PostMapping("/{username}/deactivate")

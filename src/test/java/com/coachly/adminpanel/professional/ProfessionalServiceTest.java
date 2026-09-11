@@ -1,18 +1,16 @@
 package com.coachly.adminpanel.professional;
 
-import com.coachly.adminpanel.common.exception.ResourceNotFoundException;
 import com.coachly.adminpanel.common.exception.UsernameAlreadyExistsException;
 import com.coachly.adminpanel.common.storage.StorageService;
 import com.coachly.adminpanel.discipline.Discipline;
 import com.coachly.adminpanel.discipline.DisciplineRepository;
-import com.coachly.adminpanel.discipline.dto.DisciplineResponse;
 import com.coachly.adminpanel.professional.dto.ProfessionalProfileResponse;
+import com.coachly.adminpanel.professional.dto.ProfessionalResponse;
 import com.coachly.adminpanel.professional.dto.RegisterProfessionalRequest;
 import com.coachly.adminpanel.professional.dto.UpdateProfessionalRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,7 +20,6 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -84,7 +81,8 @@ class ProfessionalServiceTest {
                 .avatarId("avatars/test-avatar.png")
                 .build();
 
-        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(professional));
+        when(professionalRepository.findByUsernameWithDetails("john_doe")).thenReturn(Optional.of(professional));
+        when(professionalRepository.countActiveSubscribersByProfessionalId(any())).thenReturn(0);
         when(storageService.resolveUrl("avatars/test-avatar.png")).thenReturn("http://localhost:8080/uploads/avatars/test-avatar.png");
 
         ProfessionalProfileResponse response = professionalService.getProfessional("john_doe");
@@ -100,6 +98,37 @@ class ProfessionalServiceTest {
         assertThat(response.disciplines()).hasSize(1);
         assertThat(response.disciplines().get(0).slug()).isEqualTo("mma");
         assertThat(response.disciplines().get(0).name()).containsEntry("en", "MMA");
+        assertThat(response.subscriptionCount()).isEqualTo(0);
+        assertThat(response.appointments()).isEmpty();
+    }
+
+    @Test
+    void getAllProfessionals_shouldReturnAllProfessionals() {
+        Professional professional = Professional.builder()
+                .username("john_doe")
+                .firstName("John")
+                .lastName("Doe")
+                .locale("en")
+                .biography(Map.of("en", "Bio"))
+                .socials(Map.of("instagram", "https://instagram.com/johndoe"))
+                .disciplines(Set.of(mmaDiscipline))
+                .avatarId("avatars/test-avatar.png")
+                .build();
+
+        when(professionalRepository.countActiveSubscribersAll()).thenReturn(Collections.emptyList());
+        when(professionalRepository.findAll()).thenReturn(List.of(professional));
+        when(storageService.resolveUrl("avatars/test-avatar.png")).thenReturn("http://localhost:8080/uploads/avatars/test-avatar.png");
+
+        List<ProfessionalResponse> responseList = professionalService.getAllProfessionals();
+
+        assertThat(responseList).hasSize(1);
+        ProfessionalResponse response = responseList.get(0);
+        assertThat(response.username()).isEqualTo("john_doe");
+        assertThat(response.firstName()).isEqualTo("John");
+        assertThat(response.lastName()).isEqualTo("Doe");
+        assertThat(response.locale()).isEqualTo("en");
+        assertThat(response.avatarUrl()).isEqualTo("http://localhost:8080/uploads/avatars/test-avatar.png");
+        assertThat(response.subscriptionCount()).isEqualTo(0);
     }
 
     @Test
@@ -114,7 +143,7 @@ class ProfessionalServiceTest {
                 .build();
 
         when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(professional));
-        when(disciplineRepository.findBySlug("boxing")).thenReturn(Optional.of(boxingDiscipline));
+        when(disciplineRepository.findAllBySlugIn(any())).thenReturn(Set.of(boxingDiscipline));
 
         UpdateProfessionalRequest request = new UpdateProfessionalRequest(
                 "john_doe", "Johnny", "Doey", "Updated Bio", "en", Set.of("boxing"), Map.of("instagram", "https://instagram.com/johnny")
