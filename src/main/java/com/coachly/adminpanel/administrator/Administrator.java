@@ -31,9 +31,8 @@ public class Administrator extends BaseEntity {
     @Column(unique = true)
     private String email;
 
-    @JdbcTypeCode(SqlTypes.ENUM)
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, columnDefinition = "administrator_role")
-//    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private AdministratorRole role;
 }

@@ -27,7 +27,7 @@ public class Appointment extends BaseEntity {
     @Column(columnDefinition = "UUID")
     private UUID id;
 
-    @JdbcTypeCode(SqlTypes.ENUM)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "type", nullable = false, columnDefinition = "appointment_type")
     private AppointmentType type;
 
@@ -41,7 +41,7 @@ public class Appointment extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private Instant endTime;
 
-    @JdbcTypeCode(SqlTypes.ENUM)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", columnDefinition = "appointment_status")
     private AppointmentStatus status;
 

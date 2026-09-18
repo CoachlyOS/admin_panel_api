@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/professional")
@@ -36,22 +37,16 @@ public class ProfessionalController {
         professionalService.updateProfessional(professionalRequest);
     }
 
-    @GetMapping("/{username}")
-    @Operation(summary = "Get professional profile by username")
-    public ProfessionalProfileResponse getProfessional(@PathVariable String username) {
-        return professionalService.getProfessional(username);
+    @GetMapping("/{id}")
+    @Operation(summary = "Get professional profile by id")
+    public ProfessionalProfileResponse getProfessional(@PathVariable UUID id) {
+        return professionalService.getProfessional(id);
     }
 
     @GetMapping("/all")
     @Operation(summary = "Get list of all professionals")
     public List<ProfessionalResponse> getAllProfessionals() {
         return professionalService.getAllProfessionals();
-    }
-
-    @PostMapping("/{username}/deactivate")
-    @Operation(summary = "Deactivate a professional by username")
-    public void deactivateProfessional(@PathVariable String username) {
-        professionalService.deactivateProfessional(username);
     }
 
     @PostMapping(value = "/{username}/avatar", consumes = "multipart/form-data")

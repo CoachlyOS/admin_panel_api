@@ -59,13 +59,37 @@ class ProfessionalServiceTest {
     void registerProfessional_withExistingUsername_shouldThrowUsernameAlreadyExistsException() {
         when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(new Professional()));
         RegisterProfessionalRequest request = new RegisterProfessionalRequest(
-                "john_doe", "password123", "John", "Doe");
+                "john_doe", "password123", "John", "Doe", null, null, null, null);
 
         assertThatThrownBy(() -> professionalService.registerProfessional(request))
                 .isInstanceOf(UsernameAlreadyExistsException.class)
                 .hasMessageContaining("Username is already in use");
 
         verify(professionalRepository, never()).save(any());
+    }
+
+    @Test
+    void registerProfessional_withFullOptionalFields_shouldPopulateProfile() {
+        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.empty());
+        when(disciplineRepository.findAllBySlugIn(any())).thenReturn(Set.of(boxingDiscipline));
+        when(passwordEncoder.encode("password123")).thenReturn("encoded");
+
+        RegisterProfessionalRequest request = new RegisterProfessionalRequest(
+                "john_doe", "password123", "John", "Doe",
+                "uk", Map.of("en", "Bio", "uk", "Біо"), Set.of("boxing"), Map.of("instagram", "johndoe"));
+
+        professionalService.registerProfessional(request);
+
+        org.mockito.ArgumentCaptor<Professional> captor = org.mockito.ArgumentCaptor.forClass(Professional.class);
+        verify(professionalRepository).save(captor.capture());
+        Professional saved = captor.getValue();
+        assertThat(saved.getUsername()).isEqualTo("john_doe");
+        assertThat(saved.getPassword()).isEqualTo("encoded");
+        assertThat(saved.getLocale()).isEqualTo("uk");
+        assertThat(saved.getBiography()).containsEntry("en", "Bio").containsEntry("uk", "Біо");
+        assertThat(saved.getDisciplines()).containsExactly(boxingDiscipline);
+        assertThat(saved.getSocials()).containsEntry("instagram", "johndoe");
+        assertThat(saved.getIsActive()).isTrue();
     }
 
     @Test
@@ -81,11 +105,10 @@ class ProfessionalServiceTest {
                 .avatarId("avatars/test-avatar.png")
                 .build();
 
-        when(professionalRepository.findByUsernameWithDetails("john_doe")).thenReturn(Optional.of(professional));
-        when(professionalRepository.countActiveSubscribersByProfessionalId(any())).thenReturn(0);
+        when(professionalRepository.findByIdWithDetails(any())).thenReturn(Optional.of(professional));
         when(storageService.resolveUrl("avatars/test-avatar.png")).thenReturn("http://localhost:8080/uploads/avatars/test-avatar.png");
 
-        ProfessionalProfileResponse response = professionalService.getProfessional("john_doe");
+        ProfessionalProfileResponse response = professionalService.getProfessional(UUID.randomUUID());
 
         assertThat(response.username()).isEqualTo("john_doe");
         assertThat(response.firstName()).isEqualTo("John");
@@ -98,7 +121,6 @@ class ProfessionalServiceTest {
         assertThat(response.disciplines()).hasSize(1);
         assertThat(response.disciplines().get(0).slug()).isEqualTo("mma");
         assertThat(response.disciplines().get(0).name()).containsEntry("en", "MMA");
-        assertThat(response.subscriptionCount()).isEqualTo(0);
         assertThat(response.appointments()).isEmpty();
     }
 
@@ -115,8 +137,7 @@ class ProfessionalServiceTest {
                 .avatarId("avatars/test-avatar.png")
                 .build();
 
-        when(professionalRepository.countActiveSubscribersAll()).thenReturn(Collections.emptyList());
-        when(professionalRepository.findAll()).thenReturn(List.of(professional));
+        when(professionalRepository.findAllWithDisciplines()).thenReturn(List.of(professional));
         when(storageService.resolveUrl("avatars/test-avatar.png")).thenReturn("http://localhost:8080/uploads/avatars/test-avatar.png");
 
         List<ProfessionalResponse> responseList = professionalService.getAllProfessionals();
@@ -128,7 +149,9 @@ class ProfessionalServiceTest {
         assertThat(response.lastName()).isEqualTo("Doe");
         assertThat(response.locale()).isEqualTo("en");
         assertThat(response.avatarUrl()).isEqualTo("http://localhost:8080/uploads/avatars/test-avatar.png");
-        assertThat(response.subscriptionCount()).isEqualTo(0);
+        assertThat(response.disciplines()).hasSize(1);
+        assertThat(response.disciplines().get(0).slug()).isEqualTo("mma");
+        assertThat(response.disciplines().get(0).name()).containsEntry("en", "MMA");
     }
 
     @Test
@@ -146,7 +169,8 @@ class ProfessionalServiceTest {
         when(disciplineRepository.findAllBySlugIn(any())).thenReturn(Set.of(boxingDiscipline));
 
         UpdateProfessionalRequest request = new UpdateProfessionalRequest(
-                "john_doe", "Johnny", "Doey", "Updated Bio", "en", Set.of("boxing"), Map.of("instagram", "https://instagram.com/johnny")
+                "john_doe", "Johnny", "Doey", "en", Map.of("en", "Updated Bio"), Set.of("boxing"),
+                Map.of("instagram", "https://instagram.com/johnny"), null
         );
 
         professionalService.updateProfessional(request);
@@ -156,6 +180,87 @@ class ProfessionalServiceTest {
         assertThat(professional.getBiography()).containsEntry("en", "Updated Bio");
         assertThat(professional.getSocials()).containsEntry("instagram", "https://instagram.com/johnny");
         assertThat(professional.getDisciplines()).containsExactly(boxingDiscipline);
+        verify(professionalRepository, times(1)).save(professional);
+    }
+
+    @Test
+    void updateProfessional_shouldFullyReplaceBiographyWhenPresent() {
+        Professional professional = Professional.builder()
+                .username("john_doe")
+                .firstName("John")
+                .lastName("Doe")
+                .biography(new HashMap<>(Map.of("en", "Old bio", "uk", "Старе біо")))
+                .build();
+
+        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(professional));
+
+        UpdateProfessionalRequest request = new UpdateProfessionalRequest(
+                "john_doe", null, null, null, Map.of("en", "New bio"), null, null, null
+        );
+
+        professionalService.updateProfessional(request);
+
+        assertThat(professional.getBiography())
+                .containsOnly(org.assertj.core.data.MapEntry.entry("en", "New bio"));
+        verify(professionalRepository, times(1)).save(professional);
+    }
+
+    @Test
+    void updateProfessional_shouldLeaveBiographyUntouchedWhenNull() {
+        Professional professional = Professional.builder()
+                .username("john_doe")
+                .firstName("John")
+                .lastName("Doe")
+                .biography(new HashMap<>(Map.of("en", "Existing", "uk", "Існуюче")))
+                .build();
+
+        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(professional));
+
+        UpdateProfessionalRequest request = new UpdateProfessionalRequest(
+                "john_doe", null, null, null, null, null, null, null
+        );
+
+        professionalService.updateProfessional(request);
+
+        assertThat(professional.getBiography()).containsEntry("en", "Existing").containsEntry("uk", "Існуюче");
+        verify(professionalRepository, times(1)).save(professional);
+    }
+
+    @Test
+    void updateProfessional_shouldRoundTripIsActiveBothDirections() {
+        Professional professional = Professional.builder()
+                .username("john_doe")
+                .firstName("John")
+                .lastName("Doe")
+                .isActive(true)
+                .build();
+
+        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(professional));
+
+        professionalService.updateProfessional(new UpdateProfessionalRequest(
+                "john_doe", null, null, null, null, null, null, false));
+        assertThat(professional.getIsActive()).isFalse();
+
+        professionalService.updateProfessional(new UpdateProfessionalRequest(
+                "john_doe", null, null, null, null, null, null, true));
+        assertThat(professional.getIsActive()).isTrue();
+    }
+
+    @Test
+    void updateProfessional_shouldLeaveIsActiveUntouchedWhenAbsent() {
+        Professional professional = Professional.builder()
+                .username("john_doe")
+                .firstName("John")
+                .lastName("Doe")
+                .isActive(true)
+                .build();
+
+        when(professionalRepository.findByUsername("john_doe")).thenReturn(Optional.of(professional));
+
+        professionalService.updateProfessional(new UpdateProfessionalRequest(
+                "john_doe", "Johnny", null, null, null, null, null, null));
+
+        assertThat(professional.getIsActive()).isTrue();
         verify(professionalRepository, times(1)).save(professional);
     }
 }

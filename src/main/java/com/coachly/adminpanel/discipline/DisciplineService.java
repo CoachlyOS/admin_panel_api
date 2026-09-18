@@ -18,13 +18,13 @@ public class DisciplineService {
 
     public List<DisciplineResponse> getAllDisciplines() {
         return disciplineRepository.findAll().stream()
-                .map(d -> new DisciplineResponse(d.getSlug(), d.getName()))
+                .map(d -> new DisciplineResponse(d.getId(), d.getSlug(), d.getName()))
                 .toList();
     }
 
     public DisciplineResponse getDiscipline(String slug) {
         return disciplineRepository.findBySlug(slug)
-                .map(d -> new DisciplineResponse(d.getSlug(), d.getName()))
+                .map(d -> new DisciplineResponse(d.getId(), d.getSlug(), d.getName()))
                 .orElseThrow(() -> new ResourceNotFoundException("Discipline not found with slug: " + slug));
     }
 
