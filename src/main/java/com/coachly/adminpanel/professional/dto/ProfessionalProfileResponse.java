@@ -14,6 +14,5 @@ public record ProfessionalProfileResponse(
         List<DisciplineResponse> disciplines,
         Map<String, String> socials,
         String avatarUrl,
-        Integer subscriptionCount,
         List<ProfessionalAppointmentResponse> appointments
 ) {}

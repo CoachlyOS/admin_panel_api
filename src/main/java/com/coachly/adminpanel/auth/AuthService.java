@@ -40,8 +40,6 @@ public class AuthService {
 
         var administrator = administratorRepository.findByUsername(username).orElseThrow();
 
-        // TODO: Refactor to return only necessary fields
-        // TODO: ADD EMAIL
         var administratorProfile = new AdministratorProfileResponse(
                 administrator.getId(),
                 administrator.getUsername(),

@@ -1,3 +1,3 @@
 INSERT INTO administrators (username, password, role)
-VALUES ('admin', '$2a$12$ZCUQ1zZmhTKH1rMQmkCc0.eQNb3LZUptfHWq8fUNZMXQlu.9d1a02', 'ADMIN')
+VALUES ('admin', '$2a$12$0KPSo/.NLcbZqNN1PWsYcuaWSZFjteHI7WQR1bAW78l9Gq0rKo03G', 'ADMIN')
     ON CONFLICT (username) DO NOTHING;

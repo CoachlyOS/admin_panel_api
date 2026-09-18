@@ -15,16 +15,19 @@ public record UpdateProfessionalRequest(
         @Schema(description = "Updated last name", example = "Doe")
         String lastName,
 
-        @Schema(description = "Professional bio or introduction", example = "Experienced personal trainer.")
-        String biography,
-
-        @Schema(description = "Preferred language locale code", example = "en")
+        @Schema(description = "Preferred/display locale code for the professional (e.g. for Telegram bot UI), independent of biography map keys", example = "en")
         String locale,
 
-        @Schema(description = "Associated disciplines/skills", example = "[\"Yoga\", \"Nutrition\"]")
+        @Schema(description = "Full locale→text biography map; when present, fully replaces the existing biography (not merged key-by-key)", example = "{\"en\":\"Experienced trainer.\",\"uk\":\"Досвідчений тренер.\"}")
+        Map<String, String> biography,
+
+        @Schema(description = "Associated discipline slugs; when present, fully replaces the professional's disciplines", example = "[\"yoga\",\"nutrition\"]")
         Set<String> disciplines,
 
-        @Schema(description = "Social media links", example = "{\"instagram\": \"johndoe_fit\"}")
-        Map<String, String> socials
+        @Schema(description = "Social media links; when present, fully replaces the existing socials", example = "{\"instagram\": \"johndoe_fit\"}")
+        Map<String, String> socials,
+
+        @Schema(description = "Active flag; when present (non-null) sets the professional's isActive state in either direction (activate/deactivate). When null/absent, the current value is left untouched.", example = "true")
+        Boolean isActive
 ) {
 }

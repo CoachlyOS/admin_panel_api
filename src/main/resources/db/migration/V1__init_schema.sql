@@ -38,16 +38,6 @@ CREATE TABLE IF NOT EXISTS professionals (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create subscriptions table
-CREATE TABLE IF NOT EXISTS subscriptions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    professional_id UUID NOT NULL REFERENCES professionals(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(client_id, professional_id)
-);
-
 -- Create appointments table
 CREATE TABLE IF NOT EXISTS appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -77,8 +67,6 @@ CREATE INDEX IF NOT EXISTS idx_appointments_start_time ON appointments(start_tim
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_client_appointments_client_id ON client_appointments(client_id);
 CREATE INDEX IF NOT EXISTS idx_client_appointments_appointment_id ON client_appointments(appointment_id);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_client_id ON subscriptions(client_id);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_professional_id ON subscriptions(professional_id);
 
 -- Create function to delete appointments when client is deleted
 -- This is needed because appointments don't have a direct FK to clients
